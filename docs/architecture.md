@@ -13,12 +13,58 @@ The goal is to keep service boundaries real and useful without over-splitting th
 
 ## Architecture Summary
 
+```mermaid
+flowchart LR
+    Web[Next.js Web App]
+    Gateway[API Gateway]
+    Identity[Identity Service]
+    Marketplace[Marketplace Service]
+    Messaging[Messaging Service]
+    Trust[Trust Service]
+    Moderation[Moderation Service]
+    Postgres[(PostgreSQL + PostGIS)]
+    Redis[(Redis)]
+    Rabbit[(RabbitMQ)]
+    S3[(S3 Storage)]
+    Stripe[(Stripe)]
+
+    Web --> Gateway
+    Gateway --> Identity
+    Gateway --> Marketplace
+    Gateway --> Messaging
+    Gateway --> Trust
+    Gateway --> Moderation
+
+    Identity --> Postgres
+    Marketplace --> Postgres
+    Messaging --> Postgres
+    Trust --> Postgres
+    Moderation --> Postgres
+
+    Identity --> Redis
+    Marketplace --> Redis
+    Messaging --> Redis
+    Trust --> Redis
+    Moderation --> Redis
+
+    Identity --> Rabbit
+    Marketplace --> Rabbit
+    Messaging --> Rabbit
+    Trust --> Rabbit
+    Moderation --> Rabbit
+
+    Identity --> Stripe
+    Identity --> S3
+    Marketplace --> S3
+```
+
 ### Frontend
 
 - `Next.js` + TypeScript
 - Tailwind CSS
 - `shadcn/ui`
 - frontend calls a single API gateway
+
 ### Backend
 
 - microservices in Docker
