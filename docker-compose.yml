@@ -1,0 +1,128 @@
+services:
+  api-gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile.service
+      args:
+        SERVICE_PATH: "@hobby2hobby/api-gateway"
+    command: sh -c "cd /app/apps/api-gateway && pnpm start:dev"
+    ports:
+      - "${API_GATEWAY_PORT:-3000}:3000"
+    environment:
+      PORT: 3000
+      IDENTITY_SERVICE_URL: http://identity-service:3001
+      MARKETPLACE_SERVICE_URL: http://marketplace-service:3002
+      MESSAGING_SERVICE_URL: http://messaging-service:3003
+      TRUST_SERVICE_URL: http://trust-service:3004
+      MODERATION_SERVICE_URL: http://moderation-service:3005
+    depends_on:
+      - identity-service
+      - marketplace-service
+      - messaging-service
+      - trust-service
+      - moderation-service
+
+  identity-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.service
+      args:
+        SERVICE_PATH: "@hobby2hobby/identity-service"
+    command: sh -c "cd /app/apps/identity-service && pnpm start:dev"
+    ports:
+      - "${IDENTITY_SERVICE_PORT:-3001}:3001"
+    environment:
+      PORT: 3001
+    depends_on:
+      - postgres
+      - redis
+      - rabbitmq
+
+  marketplace-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.service
+      args:
+        SERVICE_PATH: "@hobby2hobby/marketplace-service"
+    command: sh -c "cd /app/apps/marketplace-service && pnpm start:dev"
+    ports:
+      - "${MARKETPLACE_SERVICE_PORT:-3002}:3002"
+    environment:
+      PORT: 3002
+    depends_on:
+      - postgres
+      - redis
+      - rabbitmq
+
+  messaging-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.service
+      args:
+        SERVICE_PATH: "@hobby2hobby/messaging-service"
+    command: sh -c "cd /app/apps/messaging-service && pnpm start:dev"
+    ports:
+      - "${MESSAGING_SERVICE_PORT:-3003}:3003"
+    environment:
+      PORT: 3003
+    depends_on:
+      - postgres
+      - redis
+      - rabbitmq
+
+  trust-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.service
+      args:
+        SERVICE_PATH: "@hobby2hobby/trust-service"
+    command: sh -c "cd /app/apps/trust-service && pnpm start:dev"
+    ports:
+      - "${TRUST_SERVICE_PORT:-3004}:3004"
+    environment:
+      PORT: 3004
+    depends_on:
+      - postgres
+      - redis
+      - rabbitmq
+
+  moderation-service:
+    build:
+      context: .
+      dockerfile: Dockerfile.service
+      args:
+        SERVICE_PATH: "@hobby2hobby/moderation-service"
+    command: sh -c "cd /app/apps/moderation-service && pnpm start:dev"
+    ports:
+      - "${MODERATION_SERVICE_PORT:-3005}:3005"
+    environment:
+      PORT: 3005
+    depends_on:
+      - postgres
+      - redis
+      - rabbitmq
+
+  postgres:
+    image: postgis/postgis:16-3.4
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-hobby2hobby}
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+    ports:
+      - "${POSTGRES_PORT:-5432}:5432"
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "${REDIS_PORT:-6379}:6379"
+
+  rabbitmq:
+    image: rabbitmq:3-management-alpine
+    ports:
+      - "${RABBITMQ_PORT:-5672}:5672"
+      - "${RABBITMQ_MANAGEMENT_PORT:-15672}:15672"
+
+volumes:
+  postgres-data:

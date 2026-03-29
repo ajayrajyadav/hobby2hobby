@@ -1,0 +1,14 @@
+{
+  "name": "hobby2hobby",
+  "private": true,
+  "version": "0.1.0",
+  "packageManager": "pnpm@10.0.0",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "build": "pnpm -r build",
+    "start:dev": "pnpm --parallel --filter @hobby2hobby/* start:dev"
+  }
+}
