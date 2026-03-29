@@ -1,6 +1,7 @@
 import { INestApplication } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
 import request from "supertest";
+import { configureApiTestApp } from "../../test-utils/configure-api-test-app";
 import { ModerationController } from "./moderation.controller";
 import { ModerationRepository } from "./moderation.repository";
 import { ModerationService } from "./moderation.service";
@@ -24,6 +25,7 @@ describe("ModerationController", () => {
     }).compile();
 
     app = moduleRef.createNestApplication();
+    configureApiTestApp(app);
     await app.init();
   });
 
@@ -47,6 +49,7 @@ describe("ModerationController", () => {
 
     await request(app.getHttpServer())
       .post("/reports")
+      .set("Authorization", "Bearer dev-token-u1")
       .send({ reporterUserId: "u1", targetType: "listing", targetId: "listing-1", reasonCode: "spam" })
       .expect(201)
       .expect((response) => expect(response.body.id).toBe("report-1"));
@@ -57,6 +60,7 @@ describe("ModerationController", () => {
 
     await request(app.getHttpServer())
       .get("/reports")
+      .set("Authorization", "Bearer dev-token-u1")
       .expect(200)
       .expect((response) => expect(response.body).toHaveLength(1));
   });
@@ -70,6 +74,7 @@ describe("ModerationController", () => {
 
     await request(app.getHttpServer())
       .post("/blocks")
+      .set("Authorization", "Bearer dev-token-u1")
       .send({ blockerUserId: "u1", blockedUserId: "u2" })
       .expect(201)
       .expect((response) => expect(response.body.id).toBe("block-1"));

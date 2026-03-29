@@ -1,16 +1,45 @@
+import { IsIn, IsOptional, IsString, MinLength } from "class-validator";
+
 export type ListingType = "offer" | "need";
 export type ServiceMode = "remote" | "in_person" | "either";
 
-export interface CreateListingDto {
-  userId: string;
-  listingType: ListingType;
-  title: string;
-  description: string;
-  categorySlug: string;
-  regionSlug: string;
+export class CreateListingDto {
+  @IsString()
+  @MinLength(1)
+  userId!: string;
+
+  @IsIn(["offer", "need"])
+  listingType!: ListingType;
+
+  @IsString()
+  @MinLength(2)
+  title!: string;
+
+  @IsString()
+  @MinLength(5)
+  description!: string;
+
+  @IsString()
+  @MinLength(2)
+  categorySlug!: string;
+
+  @IsString()
+  @MinLength(2)
+  regionSlug!: string;
+
+  @IsOptional()
+  @IsString()
   locationLabel?: string;
-  serviceMode: ServiceMode;
+
+  @IsIn(["remote", "in_person", "either"])
+  serviceMode!: ServiceMode;
+
+  @IsOptional()
+  @IsString()
   availabilityText?: string;
+
+  @IsOptional()
+  @IsString()
   whatInExchange?: string;
 }
 
@@ -29,9 +58,20 @@ export interface Listing {
   status: "active" | "archived";
 }
 
-export interface SearchListingsQuery {
+export class SearchListingsQuery {
+  @IsOptional()
+  @IsString()
   q?: string;
+
+  @IsOptional()
+  @IsString()
   categorySlug?: string;
+
+  @IsOptional()
+  @IsString()
   regionSlug?: string;
+
+  @IsOptional()
+  @IsIn(["remote", "in_person", "either"])
   serviceMode?: ServiceMode;
 }

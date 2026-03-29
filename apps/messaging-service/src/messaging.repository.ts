@@ -7,7 +7,8 @@ import {
   CreateThreadDto,
   Message,
   MessageThread,
-  Proposal
+  Proposal,
+  ThreadDetail
 } from "@hobby2hobby/contracts";
 import { PostgresService } from "@hobby2hobby/postgres";
 
@@ -132,19 +133,25 @@ export class MessagingRepository implements OnModuleInit {
     return thread.thread;
   }
 
-  async listThreads(): Promise<MessageThread[]> {
+  async listThreadsForUser(userId: string): Promise<MessageThread[]> {
     const result = await this.postgres.query<ThreadRow>(
       `
-        select id, listing_id, status
-        from messaging.threads
-        order by created_at desc
-      `
+        select t.id, t.listing_id, t.status
+        from messaging.threads t
+        where exists (
+          select 1
+          from messaging.thread_participants p
+          where p.thread_id = t.id and p.user_id = $1
+        )
+        order by t.created_at desc
+      `,
+      [userId]
     );
 
     return Promise.all(result.rows.map((row) => this.mapThread(row)));
   }
 
-  async getThread(id: string): Promise<{ thread: MessageThread; messages: Message[] } | null> {
+  async getThread(id: string): Promise<ThreadDetail | null> {
     const threadResult = await this.postgres.query<ThreadRow>(
       `
         select id, listing_id, status
@@ -168,6 +175,24 @@ export class MessagingRepository implements OnModuleInit {
       [id]
     );
 
+    const proposalResult = await this.postgres.query<ProposalRow>(
+      `
+        select
+          id,
+          thread_id,
+          proposed_by,
+          service_a,
+          service_b,
+          expected_timing,
+          conditions,
+          status
+        from messaging.proposals
+        where thread_id = $1
+        order by created_at desc
+      `,
+      [id]
+    );
+
     return {
       thread: await this.mapThread(threadResult.rows[0]),
       messages: messageResult.rows.map((row) => ({
@@ -175,7 +200,8 @@ export class MessagingRepository implements OnModuleInit {
         threadId: row.thread_id,
         senderUserId: row.sender_user_id,
         body: row.body
-      }))
+      })),
+      proposals: await Promise.all(proposalResult.rows.map((row) => this.mapProposal(row)))
     };
   }
 
@@ -239,7 +265,7 @@ export class MessagingRepository implements OnModuleInit {
       ]
     );
 
-    return this.getProposal(proposalId);
+    return this.getProposalById(proposalId);
   }
 
   async completeAgreement(proposalId: string, input: CompletionDto): Promise<Proposal | null> {
@@ -274,10 +300,10 @@ export class MessagingRepository implements OnModuleInit {
       }
     });
 
-    return this.getProposal(proposalId);
+    return this.getProposalById(proposalId);
   }
 
-  private async getProposal(proposalId: string): Promise<Proposal | null> {
+  async getProposalById(proposalId: string): Promise<Proposal | null> {
     const result = await this.postgres.query<ProposalRow>(
       `
         select

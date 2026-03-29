@@ -1,6 +1,7 @@
 import { INestApplication } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
 import request from "supertest";
+import { configureApiTestApp } from "../../test-utils/configure-api-test-app";
 import { IdentityController } from "./identity.controller";
 import { IdentityRepository } from "./identity.repository";
 import { IdentityService } from "./identity.service";
@@ -29,6 +30,7 @@ describe("IdentityController", () => {
     }).compile();
 
     app = moduleRef.createNestApplication();
+    configureApiTestApp(app);
     await app.init();
   });
 
@@ -51,13 +53,13 @@ describe("IdentityController", () => {
 
     await request(app.getHttpServer())
       .post("/auth/register")
-      .send({ email: "a@test.com", password: "secret", displayName: "Ajay" })
+      .send({ email: "a@test.com", password: "secret1", displayName: "Ajay" })
       .expect(201)
       .expect({ userId: "user-1", token: "dev-token-user-1" });
   });
 
   it("POST /auth/login", async () => {
-    const hash = require("crypto").scryptSync("secret", "a@test.com", 64).toString("hex");
+    const hash = require("crypto").scryptSync("secret1", "a@test.com", 64).toString("hex");
     repository.findPasswordHashByEmail.mockResolvedValue({
       userId: "user-1",
       passwordHash: hash
@@ -65,7 +67,7 @@ describe("IdentityController", () => {
 
     await request(app.getHttpServer())
       .post("/auth/login")
-      .send({ email: "a@test.com", password: "secret" })
+      .send({ email: "a@test.com", password: "secret1" })
       .expect(201)
       .expect({ userId: "user-1", token: "dev-token-user-1" });
   });
@@ -81,7 +83,7 @@ describe("IdentityController", () => {
 
     await request(app.getHttpServer())
       .get("/me")
-      .query({ userId: "user-1" })
+      .set("Authorization", "Bearer dev-token-user-1")
       .expect(200)
       .expect((response) => {
         expect(response.body.userId).toBe("user-1");
@@ -116,6 +118,7 @@ describe("IdentityController", () => {
 
     await request(app.getHttpServer())
       .patch("/profiles/user-2")
+      .set("Authorization", "Bearer dev-token-user-2")
       .send({ displayName: "Updated" })
       .expect(200)
       .expect((response) => {
@@ -132,6 +135,7 @@ describe("IdentityController", () => {
 
     await request(app.getHttpServer())
       .get("/subscriptions/user-2")
+      .set("Authorization", "Bearer dev-token-user-2")
       .expect(200)
       .expect({
         userId: "user-2",

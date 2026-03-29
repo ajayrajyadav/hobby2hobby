@@ -31,6 +31,8 @@ This file records product and planning decisions for hobby2hobby. Entries below 
 | D-017 | 2026-03-28 | accepted | The system architecture will be documented in `docs/architecture.md`. | Keeps implementation guidance separate from the product plan and decision history. | Planning |
 | D-018 | 2026-03-28 | accepted | The project will use PostgreSQL from the start, not migrate to it later. | Aligns development and production on the same database and avoids unnecessary migration work. | User decision |
 | D-019 | 2026-03-28 | accepted | The database design will be documented in `docs/database.md`. | Keeps service data ownership and Postgres schema planning explicit before persistence work begins. | Planning |
+| D-020 | 2026-03-28 | accepted | The MVP web client will use Next.js App Router against the API gateway. | Keeps the browser talking to one public backend surface while preserving the microservice split behind the gateway. | Implementation |
+| D-021 | 2026-03-28 | accepted | The MVP browser session model will use bearer tokens stored client-side until production auth is upgraded. | Matches the current dev token backend contract and unblocks end-to-end frontend work without inventing a second auth system. | Implementation |
 
 ## Open Decisions To Resolve Next
 

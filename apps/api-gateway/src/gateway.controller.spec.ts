@@ -1,6 +1,7 @@
 import { INestApplication } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
 import request from "supertest";
+import { configureApiTestApp } from "../../test-utils/configure-api-test-app";
 import { GatewayController } from "./gateway.controller";
 import { GatewayService } from "./gateway.service";
 
@@ -26,6 +27,7 @@ describe("GatewayController", () => {
     }).compile();
 
     app = moduleRef.createNestApplication();
+    configureApiTestApp(app);
     await app.init();
   });
 
@@ -50,34 +52,37 @@ describe("GatewayController", () => {
   });
 
   const cases = [
-    ["post", "/api/v1/auth/register", { email: "a@test.com" }, "auth/register"],
-    ["post", "/api/v1/auth/login", { email: "a@test.com" }, "auth/login"],
-    ["get", "/api/v1/me?userId=u1", undefined, "me?userId=u1"],
-    ["get", "/api/v1/profiles/u1", undefined, "profiles/u1"],
-    ["patch", "/api/v1/profiles/u1", { displayName: "Ajay" }, "profiles/u1"],
-    ["get", "/api/v1/subscriptions/u1", undefined, "subscriptions/u1"],
-    ["post", "/api/v1/listings", { title: "T" }, "listings"],
-    ["get", "/api/v1/listings", undefined, "listings"],
-    ["get", "/api/v1/listings/l1", undefined, "listings/l1"],
-    ["patch", "/api/v1/listings/l1/archive", undefined, "listings/l1/archive"],
-    ["get", "/api/v1/search?q=test", undefined, "search?q=test"],
-    ["post", "/api/v1/threads", { initiatedBy: "u1" }, "threads"],
-    ["get", "/api/v1/threads", undefined, "threads"],
-    ["get", "/api/v1/threads/t1", undefined, "threads/t1"],
-    ["post", "/api/v1/threads/t1/messages", { body: "Hi" }, "threads/t1/messages"],
-    ["post", "/api/v1/proposals", { threadId: "t1" }, "proposals"],
-    ["post", "/api/v1/agreements/p1/complete", { userId: "u1" }, "agreements/p1/complete"],
-    ["post", "/api/v1/reviews", { rating: 5 }, "reviews"],
-    ["get", "/api/v1/users/u1/reviews", undefined, "users/u1/reviews"],
-    ["post", "/api/v1/vouches", { vouchedUserId: "u2" }, "vouches"],
-    ["get", "/api/v1/users/u1/trust-summary", undefined, "users/u1/trust-summary"],
-    ["post", "/api/v1/reports", { reasonCode: "spam" }, "reports"],
-    ["get", "/api/v1/reports", undefined, "reports"],
-    ["post", "/api/v1/blocks", { blockedUserId: "u2" }, "blocks"]
+    ["post", "/api/v1/auth/register", { email: "a@test.com", password: "secret1", displayName: "Ajay" }, "auth/register", false],
+    ["post", "/api/v1/auth/login", { email: "a@test.com", password: "secret1" }, "auth/login", false],
+    ["get", "/api/v1/me", undefined, "me", true],
+    ["get", "/api/v1/profiles/u1", undefined, "profiles/u1", false],
+    ["patch", "/api/v1/profiles/u1", { displayName: "Ajay" }, "profiles/u1", true],
+    ["get", "/api/v1/subscriptions/u1", undefined, "subscriptions/u1", true],
+    ["post", "/api/v1/listings", { userId: "u1", listingType: "offer", title: "Tt", description: "Valid description", categorySlug: "cat", regionSlug: "la", serviceMode: "either" }, "listings", true],
+    ["get", "/api/v1/listings", undefined, "listings", false],
+    ["get", "/api/v1/listings/l1", undefined, "listings/l1", false],
+    ["patch", "/api/v1/listings/l1/archive", undefined, "listings/l1/archive", true],
+    ["get", "/api/v1/search?q=test", undefined, "search?q=test", false],
+    ["post", "/api/v1/threads", { initiatedBy: "u1", participantIds: ["u2"], initialMessage: "Hi" }, "threads", true],
+    ["get", "/api/v1/threads", undefined, "threads", true],
+    ["get", "/api/v1/threads/t1", undefined, "threads/t1", true],
+    ["post", "/api/v1/threads/t1/messages", { senderUserId: "u1", body: "Hi" }, "threads/t1/messages", true],
+    ["post", "/api/v1/proposals", { threadId: "t1", proposedBy: "u1", serviceA: "A", serviceB: "B" }, "proposals", true],
+    ["post", "/api/v1/agreements/p1/complete", { userId: "u1" }, "agreements/p1/complete", true],
+    ["post", "/api/v1/reviews", { proposalId: "p1", reviewerUserId: "u1", revieweeUserId: "u2", rating: 5 }, "reviews", true],
+    ["get", "/api/v1/users/u1/reviews", undefined, "users/u1/reviews", false],
+    ["post", "/api/v1/vouches", { voucherUserId: "u1", vouchedUserId: "u2" }, "vouches", true],
+    ["get", "/api/v1/users/u1/trust-summary", undefined, "users/u1/trust-summary", false],
+    ["post", "/api/v1/reports", { reporterUserId: "u1", targetType: "listing", targetId: "l1", reasonCode: "spam" }, "reports", true],
+    ["get", "/api/v1/reports", undefined, "reports", true],
+    ["post", "/api/v1/blocks", { blockerUserId: "u1", blockedUserId: "u2" }, "blocks", true]
   ] as const;
 
-  it.each(cases)("%s %s proxies to service", async (method, route, body, expectedPath) => {
+  it.each(cases)("%s %s proxies to service", async (method, route, body, expectedPath, needsAuth) => {
     const req = request(app.getHttpServer())[method](route);
+    if (needsAuth) {
+      req.set("Authorization", "Bearer dev-token-u1");
+    }
     if (body) {
       req.send(body);
     }
@@ -85,7 +90,10 @@ describe("GatewayController", () => {
     await req.expect(method === "post" ? 201 : 200).expect({ ok: true });
 
     expect(fetchMock).toHaveBeenCalled();
-    const [url] = fetchMock.mock.calls[0];
+    const [url, init] = fetchMock.mock.calls[0];
     expect(String(url)).toContain(expectedPath);
+    if (needsAuth) {
+      expect(init.headers.authorization).toBe("Bearer dev-token-u1");
+    }
   });
 });

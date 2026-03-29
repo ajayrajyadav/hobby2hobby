@@ -1,6 +1,7 @@
 import { INestApplication } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
 import request from "supertest";
+import { configureApiTestApp } from "../../test-utils/configure-api-test-app";
 import { MarketplaceController } from "./marketplace.controller";
 import { MarketplaceRepository } from "./marketplace.repository";
 import { MarketplaceService } from "./marketplace.service";
@@ -26,6 +27,7 @@ describe("MarketplaceController", () => {
     }).compile();
 
     app = moduleRef.createNestApplication();
+    configureApiTestApp(app);
     await app.init();
   });
 
@@ -38,11 +40,25 @@ describe("MarketplaceController", () => {
   });
 
   it("POST /listings", async () => {
-    repository.createListing.mockResolvedValue({ id: "listing-1", title: "Photo help", status: "active" });
+    repository.createListing.mockResolvedValue({
+      id: "listing-1",
+      userId: "user-1",
+      title: "Photo help",
+      status: "active"
+    });
 
     await request(app.getHttpServer())
       .post("/listings")
-      .send({ title: "Photo help" })
+      .set("Authorization", "Bearer dev-token-user-1")
+      .send({
+        userId: "user-1",
+        listingType: "offer",
+        title: "Photo help",
+        description: "Portrait photos available",
+        categorySlug: "photo",
+        regionSlug: "la",
+        serviceMode: "either"
+      })
       .expect(201)
       .expect((response) => expect(response.body.id).toBe("listing-1"));
   });
@@ -76,11 +92,32 @@ describe("MarketplaceController", () => {
   });
 
   it("PATCH /listings/:id/archive", async () => {
+    repository.getListing.mockResolvedValue({
+      id: "listing-1",
+      userId: "user-1",
+      title: "Photo help",
+      status: "active"
+    });
     repository.archiveListing.mockResolvedValue({ id: "listing-1", title: "Photo help", status: "archived" });
 
     await request(app.getHttpServer())
       .patch("/listings/listing-1/archive")
+      .set("Authorization", "Bearer dev-token-user-1")
       .expect(200)
       .expect((response) => expect(response.body.status).toBe("archived"));
+  });
+
+  it("forbids archiving another user's listing", async () => {
+    repository.getListing.mockResolvedValue({
+      id: "listing-1",
+      userId: "user-2",
+      title: "Photo help",
+      status: "active"
+    });
+
+    await request(app.getHttpServer())
+      .patch("/listings/listing-1/archive")
+      .set("Authorization", "Bearer dev-token-user-1")
+      .expect(403);
   });
 });

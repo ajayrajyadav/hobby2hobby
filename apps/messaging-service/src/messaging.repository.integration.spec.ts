@@ -55,6 +55,7 @@ describe("MessagingRepository integration", () => {
     expect(loaded?.thread.participantIds).toEqual([user1, user2]);
     expect(loaded?.messages).toHaveLength(1);
     expect(loaded?.messages[0].body).toBe("Hello");
+    expect(loaded?.proposals).toEqual([]);
   });
 
   it("creates proposal and completes agreement after two confirmations", async () => {
@@ -74,8 +75,27 @@ describe("MessagingRepository integration", () => {
 
     await repository.completeAgreement(proposal!.id, { userId: user1 });
     const completed = await repository.completeAgreement(proposal!.id, { userId: user2 });
+    const loaded = await repository.getThread(thread.id);
 
     expect(completed?.status).toBe("completed");
     expect(completed?.completedByUserIds).toEqual([user1, user2]);
+    expect(loaded?.proposals[0].id).toBe(proposal?.id);
+  });
+
+  it("lists threads only for the requested participant", async () => {
+    await repository.createThread({
+      initiatedBy: user1,
+      participantIds: [user2]
+    });
+
+    await repository.createThread({
+      initiatedBy: "cccccccc-cccc-cccc-cccc-cccccccccccc",
+      participantIds: ["dddddddd-dddd-dddd-dddd-dddddddddddd"]
+    });
+
+    const threads = await repository.listThreadsForUser(user1);
+
+    expect(threads).toHaveLength(1);
+    expect(threads[0].participantIds).toEqual([user1, user2]);
   });
 });

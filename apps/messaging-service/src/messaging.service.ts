@@ -6,7 +6,8 @@ import {
   CreateThreadDto,
   Message,
   MessageThread,
-  Proposal
+  Proposal,
+  ThreadDetail
 } from "@hobby2hobby/contracts";
 import { MessagingRepository } from "./messaging.repository";
 
@@ -18,11 +19,11 @@ export class MessagingService {
     return this.messagingRepository.createThread(input);
   }
 
-  listThreads(): Promise<MessageThread[]> {
-    return this.messagingRepository.listThreads();
+  listThreadsForUser(userId: string): Promise<MessageThread[]> {
+    return this.messagingRepository.listThreadsForUser(userId);
   }
 
-  async getThread(id: string): Promise<{ thread: MessageThread; messages: Message[] }> {
+  async getThread(id: string): Promise<ThreadDetail> {
     const thread = await this.messagingRepository.getThread(id);
 
     if (!thread) {
@@ -30,6 +31,16 @@ export class MessagingService {
     }
 
     return thread;
+  }
+
+  async getProposal(proposalId: string): Promise<Proposal> {
+    const proposal = await this.messagingRepository.getProposalById(proposalId);
+
+    if (!proposal) {
+      throw new NotFoundException("Proposal not found");
+    }
+
+    return proposal;
   }
 
   async createMessage(threadId: string, input: CreateMessageDto): Promise<Message> {

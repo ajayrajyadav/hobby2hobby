@@ -16,6 +16,9 @@
       "@hobby2hobby/contracts": [
         "packages/contracts/src"
       ],
+      "@hobby2hobby/nest-tools": [
+        "packages/nest-tools/src"
+      ],
       "@hobby2hobby/postgres": [
         "packages/postgres/src"
       ]

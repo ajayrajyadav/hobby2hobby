@@ -1,0 +1,9 @@
+{
+  "/_not-found/page": "/_not-found",
+  "/explore/page": "/explore",
+  "/signin/page": "/signin",
+  "/page": "/",
+  "/threads/[id]/page": "/threads/[id]",
+  "/workspace/page": "/workspace",
+  "/listings/[id]/page": "/listings/[id]"
+}

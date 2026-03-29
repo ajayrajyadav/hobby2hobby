@@ -21,7 +21,8 @@ export class GatewayService {
     method: "GET" | "POST" | "PATCH",
     path: string,
     query?: Record<string, string>,
-    body?: unknown
+    body?: unknown,
+    authorization?: string
   ): Promise<unknown> {
     const url = new URL(`${this.serviceUrls[service]}/${path}`);
 
@@ -36,7 +37,8 @@ export class GatewayService {
     const response = await fetch(url, {
       method,
       headers: {
-        "content-type": "application/json"
+        "content-type": "application/json",
+        ...(authorization ? { authorization } : {})
       },
       body: body ? JSON.stringify(body) : undefined
     });

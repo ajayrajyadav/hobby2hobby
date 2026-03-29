@@ -1,16 +1,36 @@
+import { IsIn, IsOptional, IsString, MinLength } from "class-validator";
+
 export type ReportTargetType = "user" | "listing" | "message" | "review";
 
-export interface CreateReportDto {
-  reporterUserId: string;
-  targetType: ReportTargetType;
-  targetId: string;
-  reasonCode: string;
+export class CreateReportDto {
+  @IsString()
+  @MinLength(1)
+  reporterUserId!: string;
+
+  @IsIn(["user", "listing", "message", "review"])
+  targetType!: ReportTargetType;
+
+  @IsString()
+  @MinLength(1)
+  targetId!: string;
+
+  @IsString()
+  @MinLength(1)
+  reasonCode!: string;
+
+  @IsOptional()
+  @IsString()
   details?: string;
 }
 
-export interface CreateBlockDto {
-  blockerUserId: string;
-  blockedUserId: string;
+export class CreateBlockDto {
+  @IsString()
+  @MinLength(1)
+  blockerUserId!: string;
+
+  @IsString()
+  @MinLength(1)
+  blockedUserId!: string;
 }
 
 export interface Report {

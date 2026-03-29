@@ -1,6 +1,7 @@
 import { INestApplication } from "@nestjs/common";
 import { Test } from "@nestjs/testing";
 import request from "supertest";
+import { configureApiTestApp } from "../../test-utils/configure-api-test-app";
 import { TrustController } from "./trust.controller";
 import { TrustRepository } from "./trust.repository";
 import { TrustService } from "./trust.service";
@@ -25,6 +26,7 @@ describe("TrustController", () => {
     }).compile();
 
     app = moduleRef.createNestApplication();
+    configureApiTestApp(app);
     await app.init();
   });
 
@@ -47,6 +49,7 @@ describe("TrustController", () => {
 
     await request(app.getHttpServer())
       .post("/reviews")
+      .set("Authorization", "Bearer dev-token-u1")
       .send({ proposalId: "proposal-1", reviewerUserId: "u1", revieweeUserId: "u2", rating: 5 })
       .expect(201)
       .expect((response) => expect(response.body.id).toBe("review-1"));
@@ -70,6 +73,7 @@ describe("TrustController", () => {
 
     await request(app.getHttpServer())
       .post("/vouches")
+      .set("Authorization", "Bearer dev-token-u1")
       .send({ voucherUserId: "u1", vouchedUserId: "u2" })
       .expect(201)
       .expect((response) => expect(response.body.id).toBe("vouch-1"));

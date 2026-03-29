@@ -1,10 +1,17 @@
-import { Body, Controller, Get, Post } from "@nestjs/common";
+import {
+  Body,
+  Controller,
+  ForbiddenException,
+  Get,
+  Post
+} from "@nestjs/common";
 import {
   BlockRelationship,
   CreateBlockDto,
   CreateReportDto,
   Report
 } from "@hobby2hobby/contracts";
+import { CurrentUserId } from "@hobby2hobby/nest-tools";
 import { ModerationService } from "./moderation.service";
 
 @Controller()
@@ -12,7 +19,14 @@ export class ModerationController {
   constructor(private readonly moderationService: ModerationService) {}
 
   @Post("reports")
-  createReport(@Body() body: CreateReportDto): Promise<Report> {
+  createReport(
+    @CurrentUserId() currentUserId: string,
+    @Body() body: CreateReportDto
+  ): Promise<Report> {
+    if (currentUserId !== body.reporterUserId) {
+      throw new ForbiddenException("Reporter must match the authenticated user");
+    }
+
     return this.moderationService.createReport(body);
   }
 
@@ -22,7 +36,14 @@ export class ModerationController {
   }
 
   @Post("blocks")
-  createBlock(@Body() body: CreateBlockDto): Promise<BlockRelationship> {
+  createBlock(
+    @CurrentUserId() currentUserId: string,
+    @Body() body: CreateBlockDto
+  ): Promise<BlockRelationship> {
+    if (currentUserId !== body.blockerUserId) {
+      throw new ForbiddenException("Blocker must match the authenticated user");
+    }
+
     return this.moderationService.createBlock(body);
   }
 }

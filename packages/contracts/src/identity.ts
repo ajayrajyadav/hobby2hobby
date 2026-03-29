@@ -1,21 +1,48 @@
+import { IsEmail, IsOptional, IsString, MinLength } from "class-validator";
+
 export type PlanType = "free" | "paid";
 
-export interface RegisterUserDto {
-  email: string;
-  password: string;
-  displayName: string;
+export class RegisterUserDto {
+  @IsEmail()
+  email!: string;
+
+  @IsString()
+  @MinLength(6)
+  password!: string;
+
+  @IsString()
+  @MinLength(2)
+  displayName!: string;
 }
 
-export interface LoginDto {
-  email: string;
-  password: string;
+export class LoginDto {
+  @IsEmail()
+  email!: string;
+
+  @IsString()
+  @MinLength(6)
+  password!: string;
 }
 
-export interface UpdateProfileDto {
+export class UpdateProfileDto {
+  @IsOptional()
+  @IsString()
   displayName?: string;
+
+  @IsOptional()
+  @IsString()
   about?: string;
+
+  @IsOptional()
+  @IsString()
   city?: string;
+
+  @IsOptional()
+  @IsString()
   regionCode?: string;
+
+  @IsOptional()
+  @IsString()
   availabilitySummary?: string;
 }
 
