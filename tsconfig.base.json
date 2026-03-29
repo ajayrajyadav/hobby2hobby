@@ -15,6 +15,9 @@
     "paths": {
       "@hobby2hobby/contracts": [
         "packages/contracts/src"
+      ],
+      "@hobby2hobby/postgres": [
+        "packages/postgres/src"
       ]
     }
   }

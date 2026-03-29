@@ -15,27 +15,29 @@ export class MessagingController {
   constructor(private readonly messagingService: MessagingService) {}
 
   @Post("threads")
-  createThread(@Body() body: CreateThreadDto): MessageThread {
+  createThread(@Body() body: CreateThreadDto): Promise<MessageThread> {
     return this.messagingService.createThread(body);
   }
 
   @Get("threads")
-  listThreads(): MessageThread[] {
+  listThreads(): Promise<MessageThread[]> {
     return this.messagingService.listThreads();
   }
 
   @Get("threads/:id")
-  getThread(@Param("id") id: string): { thread: MessageThread; messages: Message[] } {
+  getThread(
+    @Param("id") id: string
+  ): Promise<{ thread: MessageThread; messages: Message[] }> {
     return this.messagingService.getThread(id);
   }
 
   @Post("threads/:id/messages")
-  createMessage(@Param("id") id: string, @Body() body: CreateMessageDto): Message {
+  createMessage(@Param("id") id: string, @Body() body: CreateMessageDto): Promise<Message> {
     return this.messagingService.createMessage(id, body);
   }
 
   @Post("proposals")
-  createProposal(@Body() body: CreateProposalDto): Proposal {
+  createProposal(@Body() body: CreateProposalDto): Promise<Proposal> {
     return this.messagingService.createProposal(body);
   }
 
@@ -43,7 +45,7 @@ export class MessagingController {
   completeAgreement(
     @Param("proposalId") proposalId: string,
     @Body() body: CompletionDto
-  ): Proposal {
+  ): Promise<Proposal> {
     return this.messagingService.completeAgreement(proposalId, body);
   }
 }

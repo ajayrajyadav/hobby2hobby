@@ -9,6 +9,22 @@
   ],
   "scripts": {
     "build": "pnpm -r build",
-    "start:dev": "pnpm --parallel --filter @hobby2hobby/* start:dev"
+    "start:dev": "pnpm --parallel --filter @hobby2hobby/* start:dev",
+    "test": "jest --runInBand",
+    "test:watch": "jest --watch",
+    "test:integration": "jest --runInBand --testMatch '**/*.integration.spec.ts'"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "@types/jest": "^30.0.0",
+    "@types/pg": "^8.11.11",
+    "@types/supertest": "^6.0.3",
+    "@nestjs/testing": "^11.0.0",
+    "jest": "^30.0.5",
+    "pg": "^8.14.1",
+    "supertest": "^7.1.1",
+    "testcontainers": "^10.16.0",
+    "ts-jest": "^29.4.1",
+    "typescript": "^5.8.2"
   }
 }

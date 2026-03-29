@@ -13,22 +13,22 @@ export class TrustController {
   constructor(private readonly trustService: TrustService) {}
 
   @Post("reviews")
-  createReview(@Body() body: CreateReviewDto): Review {
+  createReview(@Body() body: CreateReviewDto): Promise<Review> {
     return this.trustService.createReview(body);
   }
 
   @Get("users/:userId/reviews")
-  getReviewsForUser(@Param("userId") userId: string): Review[] {
+  getReviewsForUser(@Param("userId") userId: string): Promise<Review[]> {
     return this.trustService.getReviewsForUser(userId);
   }
 
   @Post("vouches")
-  createVouch(@Body() body: CreateVouchDto): Vouch {
+  createVouch(@Body() body: CreateVouchDto): Promise<Vouch> {
     return this.trustService.createVouch(body);
   }
 
   @Get("users/:userId/trust-summary")
-  getTrustSummary(@Param("userId") userId: string): TrustSummary {
+  getTrustSummary(@Param("userId") userId: string): Promise<TrustSummary> {
     return this.trustService.getTrustSummary(userId);
   }
 }

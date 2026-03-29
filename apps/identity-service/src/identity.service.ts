@@ -1,5 +1,5 @@
-import { Injectable, NotFoundException } from "@nestjs/common";
-import { randomUUID } from "crypto";
+import { Injectable, NotFoundException, UnauthorizedException } from "@nestjs/common";
+import { scryptSync, timingSafeEqual } from "crypto";
 import {
   AuthResponse,
   LoginDto,
@@ -8,36 +8,14 @@ import {
   UpdateProfileDto,
   UserProfile
 } from "@hobby2hobby/contracts";
+import { IdentityRepository } from "./identity.repository";
 
 @Injectable()
 export class IdentityService {
-  private readonly profiles = new Map<string, UserProfile>();
+  constructor(private readonly identityRepository: IdentityRepository) {}
 
-  register(input: RegisterUserDto): AuthResponse {
-    const userId = randomUUID();
-
-    this.profiles.set(userId, {
-      userId,
-      email: input.email,
-      displayName: input.displayName,
-      planType: "free",
-      emailVerified: false
-    });
-
-    return {
-      userId,
-      token: `dev-token-${userId}`
-    };
-  }
-
-  login(input: LoginDto): AuthResponse {
-    const profile = Array.from(this.profiles.values()).find(
-      (candidate) => candidate.email === input.email
-    );
-
-    if (!profile) {
-      throw new NotFoundException("User not found");
-    }
+  async register(input: RegisterUserDto): Promise<AuthResponse> {
+    const profile = await this.identityRepository.createUser(input);
 
     return {
       userId: profile.userId,
@@ -45,12 +23,35 @@ export class IdentityService {
     };
   }
 
-  getMe(userId: string): UserProfile {
+  async login(input: LoginDto): Promise<AuthResponse> {
+    const authRecord = await this.identityRepository.findPasswordHashByEmail(input.email);
+
+    if (!authRecord) {
+      throw new UnauthorizedException("Invalid credentials");
+    }
+
+    const suppliedHash = scryptSync(input.password, input.email, 64);
+    const storedHash = Buffer.from(authRecord.passwordHash, "hex");
+
+    if (
+      suppliedHash.length !== storedHash.length ||
+      !timingSafeEqual(suppliedHash, storedHash)
+    ) {
+      throw new UnauthorizedException("Invalid credentials");
+    }
+
+    return {
+      userId: authRecord.userId,
+      token: `dev-token-${authRecord.userId}`
+    };
+  }
+
+  getMe(userId: string): Promise<UserProfile> {
     return this.getProfile(userId);
   }
 
-  getProfile(userId: string): UserProfile {
-    const profile = this.profiles.get(userId);
+  async getProfile(userId: string): Promise<UserProfile> {
+    const profile = await this.identityRepository.findProfileByUserId(userId);
 
     if (!profile) {
       throw new NotFoundException("Profile not found");
@@ -59,25 +60,23 @@ export class IdentityService {
     return profile;
   }
 
-  updateProfile(userId: string, input: UpdateProfileDto): UserProfile {
-    const current = this.getProfile(userId);
-    const updated: UserProfile = {
-      ...current,
-      ...input
-    };
+  async updateProfile(userId: string, input: UpdateProfileDto): Promise<UserProfile> {
+    const updated = await this.identityRepository.updateProfile(userId, input);
 
-    this.profiles.set(userId, updated);
+    if (!updated) {
+      throw new NotFoundException("Profile not found");
+    }
 
     return updated;
   }
 
-  getSubscription(userId: string): SubscriptionSnapshot {
-    const profile = this.getProfile(userId);
+  async getSubscription(userId: string): Promise<SubscriptionSnapshot> {
+    const subscription = await this.identityRepository.getSubscription(userId);
 
-    return {
-      userId: profile.userId,
-      planType: profile.planType,
-      subscriptionStatus: profile.planType === "paid" ? "active" : "inactive"
-    };
+    if (!subscription) {
+      throw new NotFoundException("Subscription not found");
+    }
+
+    return subscription;
   }
 }

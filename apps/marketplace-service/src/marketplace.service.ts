@@ -1,29 +1,21 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
-import { randomUUID } from "crypto";
 import {
   CreateListingDto,
   Listing,
   SearchListingsQuery
 } from "@hobby2hobby/contracts";
+import { MarketplaceRepository } from "./marketplace.repository";
 
 @Injectable()
 export class MarketplaceService {
-  private readonly listings = new Map<string, Listing>();
+  constructor(private readonly marketplaceRepository: MarketplaceRepository) {}
 
-  createListing(input: CreateListingDto): Listing {
-    const listing: Listing = {
-      id: randomUUID(),
-      status: "active",
-      ...input
-    };
-
-    this.listings.set(listing.id, listing);
-
-    return listing;
+  createListing(input: CreateListingDto): Promise<Listing> {
+    return this.marketplaceRepository.createListing(input);
   }
 
-  getListing(id: string): Listing {
-    const listing = this.listings.get(id);
+  async getListing(id: string): Promise<Listing> {
+    const listing = await this.marketplaceRepository.getListing(id);
 
     if (!listing) {
       throw new NotFoundException("Listing not found");
@@ -32,36 +24,20 @@ export class MarketplaceService {
     return listing;
   }
 
-  listListings(): Listing[] {
-    return Array.from(this.listings.values());
+  listListings(): Promise<Listing[]> {
+    return this.marketplaceRepository.listListings();
   }
 
-  searchListings(query: SearchListingsQuery): Listing[] {
-    return this.listListings().filter((listing) => {
-      const matchesQuery = query.q
-        ? `${listing.title} ${listing.description}`
-            .toLowerCase()
-            .includes(query.q.toLowerCase())
-        : true;
-      const matchesCategory = query.categorySlug
-        ? listing.categorySlug === query.categorySlug
-        : true;
-      const matchesRegion = query.regionSlug
-        ? listing.regionSlug === query.regionSlug
-        : true;
-      const matchesMode = query.serviceMode
-        ? listing.serviceMode === query.serviceMode
-        : true;
-
-      return matchesQuery && matchesCategory && matchesRegion && matchesMode;
-    });
+  searchListings(query: SearchListingsQuery): Promise<Listing[]> {
+    return this.marketplaceRepository.searchListings(query);
   }
 
-  archiveListing(id: string): Listing {
-    const listing = this.getListing(id);
-    const archived = { ...listing, status: "archived" as const };
+  async archiveListing(id: string): Promise<Listing> {
+    const archived = await this.marketplaceRepository.archiveListing(id);
 
-    this.listings.set(id, archived);
+    if (!archived) {
+      throw new NotFoundException("Listing not found");
+    }
 
     return archived;
   }

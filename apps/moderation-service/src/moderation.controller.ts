@@ -12,17 +12,17 @@ export class ModerationController {
   constructor(private readonly moderationService: ModerationService) {}
 
   @Post("reports")
-  createReport(@Body() body: CreateReportDto): Report {
+  createReport(@Body() body: CreateReportDto): Promise<Report> {
     return this.moderationService.createReport(body);
   }
 
   @Get("reports")
-  listReports(): Report[] {
+  listReports(): Promise<Report[]> {
     return this.moderationService.listReports();
   }
 
   @Post("blocks")
-  createBlock(@Body() body: CreateBlockDto): BlockRelationship {
+  createBlock(@Body() body: CreateBlockDto): Promise<BlockRelationship> {
     return this.moderationService.createBlock(body);
   }
 }

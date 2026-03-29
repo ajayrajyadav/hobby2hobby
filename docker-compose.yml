@@ -33,6 +33,7 @@ services:
       - "${IDENTITY_SERVICE_PORT:-3001}:3001"
     environment:
       PORT: 3001
+      DATABASE_URL: ${DATABASE_URL:-postgres://postgres:postgres@postgres:5432/hobby2hobby}
     depends_on:
       - postgres
       - redis
@@ -49,6 +50,7 @@ services:
       - "${MARKETPLACE_SERVICE_PORT:-3002}:3002"
     environment:
       PORT: 3002
+      DATABASE_URL: ${DATABASE_URL:-postgres://postgres:postgres@postgres:5432/hobby2hobby}
     depends_on:
       - postgres
       - redis
@@ -65,6 +67,7 @@ services:
       - "${MESSAGING_SERVICE_PORT:-3003}:3003"
     environment:
       PORT: 3003
+      DATABASE_URL: ${DATABASE_URL:-postgres://postgres:postgres@postgres:5432/hobby2hobby}
     depends_on:
       - postgres
       - redis
@@ -81,6 +84,7 @@ services:
       - "${TRUST_SERVICE_PORT:-3004}:3004"
     environment:
       PORT: 3004
+      DATABASE_URL: ${DATABASE_URL:-postgres://postgres:postgres@postgres:5432/hobby2hobby}
     depends_on:
       - postgres
       - redis
@@ -97,6 +101,7 @@ services:
       - "${MODERATION_SERVICE_PORT:-3005}:3005"
     environment:
       PORT: 3005
+      DATABASE_URL: ${DATABASE_URL:-postgres://postgres:postgres@postgres:5432/hobby2hobby}
     depends_on:
       - postgres
       - redis

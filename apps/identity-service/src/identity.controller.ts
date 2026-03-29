@@ -14,22 +14,22 @@ export class IdentityController {
   constructor(private readonly identityService: IdentityService) {}
 
   @Post("auth/register")
-  register(@Body() body: RegisterUserDto): AuthResponse {
+  register(@Body() body: RegisterUserDto): Promise<AuthResponse> {
     return this.identityService.register(body);
   }
 
   @Post("auth/login")
-  login(@Body() body: LoginDto): AuthResponse {
+  login(@Body() body: LoginDto): Promise<AuthResponse> {
     return this.identityService.login(body);
   }
 
   @Get("me")
-  getMe(@Query("userId") userId: string): UserProfile {
+  getMe(@Query("userId") userId: string): Promise<UserProfile> {
     return this.identityService.getMe(userId);
   }
 
   @Get("profiles/:userId")
-  getProfile(@Param("userId") userId: string): UserProfile {
+  getProfile(@Param("userId") userId: string): Promise<UserProfile> {
     return this.identityService.getProfile(userId);
   }
 
@@ -37,12 +37,12 @@ export class IdentityController {
   updateProfile(
     @Param("userId") userId: string,
     @Body() body: UpdateProfileDto
-  ): UserProfile {
+  ): Promise<UserProfile> {
     return this.identityService.updateProfile(userId, body);
   }
 
   @Get("subscriptions/:userId")
-  getSubscription(@Param("userId") userId: string): SubscriptionSnapshot {
+  getSubscription(@Param("userId") userId: string): Promise<SubscriptionSnapshot> {
     return this.identityService.getSubscription(userId);
   }
 }

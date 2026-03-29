@@ -11,27 +11,27 @@ export class MarketplaceController {
   constructor(private readonly marketplaceService: MarketplaceService) {}
 
   @Post("listings")
-  createListing(@Body() body: CreateListingDto): Listing {
+  createListing(@Body() body: CreateListingDto): Promise<Listing> {
     return this.marketplaceService.createListing(body);
   }
 
   @Get("listings")
-  listListings(): Listing[] {
+  listListings(): Promise<Listing[]> {
     return this.marketplaceService.listListings();
   }
 
   @Get("listings/:id")
-  getListing(@Param("id") id: string): Listing {
+  getListing(@Param("id") id: string): Promise<Listing> {
     return this.marketplaceService.getListing(id);
   }
 
   @Get("search")
-  searchListings(@Query() query: SearchListingsQuery): Listing[] {
+  searchListings(@Query() query: SearchListingsQuery): Promise<Listing[]> {
     return this.marketplaceService.searchListings(query);
   }
 
   @Patch("listings/:id/archive")
-  archiveListing(@Param("id") id: string): Listing {
+  archiveListing(@Param("id") id: string): Promise<Listing> {
     return this.marketplaceService.archiveListing(id);
   }
 }

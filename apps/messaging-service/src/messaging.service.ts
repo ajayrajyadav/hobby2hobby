@@ -1,5 +1,4 @@
 import { Injectable, NotFoundException } from "@nestjs/common";
-import { randomUUID } from "crypto";
 import {
   CompletionDto,
   CreateMessageDto,
@@ -9,108 +8,59 @@ import {
   MessageThread,
   Proposal
 } from "@hobby2hobby/contracts";
+import { MessagingRepository } from "./messaging.repository";
 
 @Injectable()
 export class MessagingService {
-  private readonly threads = new Map<string, MessageThread>();
-  private readonly messages = new Map<string, Message[]>();
-  private readonly proposals = new Map<string, Proposal>();
+  constructor(private readonly messagingRepository: MessagingRepository) {}
 
-  createThread(input: CreateThreadDto): MessageThread {
-    const participantIds = Array.from(new Set([input.initiatedBy, ...input.participantIds]));
-    const thread: MessageThread = {
-      id: randomUUID(),
-      listingId: input.listingId,
-      participantIds,
-      status: "open"
-    };
-
-    this.threads.set(thread.id, thread);
-    this.messages.set(thread.id, []);
-
-    if (input.initialMessage) {
-      this.createMessage(thread.id, {
-        senderUserId: input.initiatedBy,
-        body: input.initialMessage
-      });
-    }
-
-    return thread;
+  createThread(input: CreateThreadDto): Promise<MessageThread> {
+    return this.messagingRepository.createThread(input);
   }
 
-  listThreads(): MessageThread[] {
-    return Array.from(this.threads.values());
+  listThreads(): Promise<MessageThread[]> {
+    return this.messagingRepository.listThreads();
   }
 
-  getThread(id: string): { thread: MessageThread; messages: Message[] } {
-    const thread = this.threads.get(id);
+  async getThread(id: string): Promise<{ thread: MessageThread; messages: Message[] }> {
+    const thread = await this.messagingRepository.getThread(id);
 
     if (!thread) {
       throw new NotFoundException("Thread not found");
     }
 
-    return {
-      thread,
-      messages: this.messages.get(id) ?? []
-    };
+    return thread;
   }
 
-  createMessage(threadId: string, input: CreateMessageDto): Message {
-    this.getThread(threadId);
+  async createMessage(threadId: string, input: CreateMessageDto): Promise<Message> {
+    await this.getThread(threadId);
+    const message = await this.messagingRepository.createMessage(threadId, input);
 
-    const message: Message = {
-      id: randomUUID(),
-      threadId,
-      senderUserId: input.senderUserId,
-      body: input.body
-    };
-
-    const existing = this.messages.get(threadId) ?? [];
-    existing.push(message);
-    this.messages.set(threadId, existing);
+    if (!message) {
+      throw new NotFoundException("Message could not be created");
+    }
 
     return message;
   }
 
-  createProposal(input: CreateProposalDto): Proposal {
-    this.getThread(input.threadId);
+  async createProposal(input: CreateProposalDto): Promise<Proposal> {
+    await this.getThread(input.threadId);
+    const proposal = await this.messagingRepository.createProposal(input);
 
-    const proposal: Proposal = {
-      id: randomUUID(),
-      threadId: input.threadId,
-      proposedBy: input.proposedBy,
-      serviceA: input.serviceA,
-      serviceB: input.serviceB,
-      expectedTiming: input.expectedTiming,
-      conditions: input.conditions,
-      status: "pending",
-      completedByUserIds: []
-    };
-
-    this.proposals.set(proposal.id, proposal);
+    if (!proposal) {
+      throw new NotFoundException("Proposal could not be created");
+    }
 
     return proposal;
   }
 
-  completeAgreement(proposalId: string, input: CompletionDto): Proposal {
-    const proposal = this.proposals.get(proposalId);
+  async completeAgreement(proposalId: string, input: CompletionDto): Promise<Proposal> {
+    const proposal = await this.messagingRepository.completeAgreement(proposalId, input);
 
     if (!proposal) {
       throw new NotFoundException("Proposal not found");
     }
 
-    const completedByUserIds = Array.from(
-      new Set([...proposal.completedByUserIds, input.userId])
-    );
-
-    const updated: Proposal = {
-      ...proposal,
-      completedByUserIds,
-      status: completedByUserIds.length >= 2 ? "completed" : proposal.status
-    };
-
-    this.proposals.set(proposalId, updated);
-
-    return updated;
+    return proposal;
   }
 }

@@ -1,50 +1,30 @@
 import { BadRequestException, Injectable } from "@nestjs/common";
-import { randomUUID } from "crypto";
 import {
   BlockRelationship,
   CreateBlockDto,
   CreateReportDto,
   Report
 } from "@hobby2hobby/contracts";
+import { ModerationRepository } from "./moderation.repository";
 
 @Injectable()
 export class ModerationService {
-  private readonly reports: Report[] = [];
-  private readonly blocks: BlockRelationship[] = [];
+  constructor(private readonly moderationRepository: ModerationRepository) {}
 
-  createReport(input: CreateReportDto): Report {
-    const report: Report = {
-      id: randomUUID(),
-      status: "open",
-      ...input
-    };
-
-    this.reports.push(report);
-
-    return report;
+  createReport(input: CreateReportDto): Promise<Report> {
+    return this.moderationRepository.createReport(input);
   }
 
-  listReports(): Report[] {
-    return this.reports;
+  listReports(): Promise<Report[]> {
+    return this.moderationRepository.listReports();
   }
 
-  createBlock(input: CreateBlockDto): BlockRelationship {
-    const exists = this.blocks.find(
-      (block) =>
-        block.blockerUserId === input.blockerUserId &&
-        block.blockedUserId === input.blockedUserId
-    );
+  async createBlock(input: CreateBlockDto): Promise<BlockRelationship> {
+    const block = await this.moderationRepository.createBlock(input);
 
-    if (exists) {
+    if (!block) {
       throw new BadRequestException("Block already exists");
     }
-
-    const block: BlockRelationship = {
-      id: randomUUID(),
-      ...input
-    };
-
-    this.blocks.push(block);
 
     return block;
   }
